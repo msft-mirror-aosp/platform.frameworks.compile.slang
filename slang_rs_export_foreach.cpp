@@ -314,7 +314,8 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
   slangAssert(!Name.empty() && "Function must have a name");
 
-  FE = new RSExportForEach(Context, Name);
+  FE = new RSExportForEach(Context, Name, FD->getLocation());
+  FE->mOrdinal = Context->getNextForEachOrdinal();
 
   if (!FE->validateAndConstructParams(Context, FD)) {
     return nullptr;
@@ -391,6 +392,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
       // It is not an error if we don't export an input type for legacy
       // kernel arguments. This can happen in the case of a void pointer.
+      // See ReflectionState::addForEachIn().
       if (FE->mIsKernelStyle && !InExportType) {
         TypeExportError = true;
       }
@@ -424,7 +426,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 RSExportForEach *RSExportForEach::CreateDummyRoot(RSContext *Context) {
   slangAssert(Context);
   llvm::StringRef Name = "root";
-  RSExportForEach *FE = new RSExportForEach(Context, Name);
+  RSExportForEach *FE = new RSExportForEach(Context, Name, clang::SourceLocation());
   FE->mDummyRoot = true;
   return FE;
 }
