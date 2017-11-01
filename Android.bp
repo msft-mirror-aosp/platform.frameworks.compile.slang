@@ -63,7 +63,20 @@ static_libraries_needed_by_slang = [
     "libLLVMBitWriter_2_9",
     "libLLVMBitWriter_2_9_func",
     "libLLVMBitWriter_3_2",
+    "libStripUnkAttr",
 ]
+
+// Exported header files
+cc_library_headers {
+    name: "slang_headers",
+    export_include_dirs: ["."],
+    host_supported: true,
+    target: {
+        windows: {
+	    enabled: true,
+	},
+    },
+}
 
 // Static library libslang for host
 // ========================================================
@@ -73,18 +86,6 @@ cc_library_host_static {
     compile_multilib: "first",
 
     target: {
-        linux: {
-            host_ldlibs: [
-                "-ldl",
-                "-lpthread",
-            ],
-        },
-        darwin: {
-            host_ldlibs: [
-                "-ldl",
-                "-lpthread",
-            ],
-        },
         windows: {
             // Skip missing-field-initializer warnings for mingw.
             cflags: ["-Wno-error=missing-field-initializers"],
@@ -158,10 +159,10 @@ cc_binary_host {
         "slang_rs_object_ref_count.cpp",
         "slang_rs_reflection.cpp",
         "slang_rs_reflection_cpp.cpp",
+        "slang_rs_reflection_state.cpp",
         "slang_rs_reflect_utils.cpp",
         "slang_rs_special_func.cpp",
         "slang_rs_special_kernel_param.cpp",
-        "strip_unknown_attributes.cpp",
     ],
 
     static_libs: ["libslang"] + static_libraries_needed_by_slang,
@@ -183,18 +184,6 @@ cc_binary_host {
                 "-Wno-error=missing-field-initializers",
             ],
         },
-        linux: {
-            host_ldlibs: [
-                "-ldl",
-                "-lpthread",
-            ],
-        },
-        darwin: {
-            host_ldlibs: [
-                "-ldl",
-                "-lpthread",
-            ],
-        },
     },
 
     product_variables: {
@@ -208,4 +197,5 @@ subdirs = [
     "BitWriter_2_9",
     "BitWriter_2_9_func",
     "BitWriter_3_2",
+    "StripUnkAttr",
 ]
