@@ -314,8 +314,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
   slangAssert(!Name.empty() && "Function must have a name");
 
-  FE = new RSExportForEach(Context, Name, FD->getLocation());
-  FE->mOrdinal = Context->getNextForEachOrdinal();
+  FE = new RSExportForEach(Context, Name);
 
   if (!FE->validateAndConstructParams(Context, FD)) {
     return nullptr;
@@ -324,11 +323,6 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   clang::ASTContext &Ctx = Context->getASTContext();
 
   std::string Id = CreateDummyName("helper_foreach_param", FE->getName());
-
-  // Construct type information about usrData, inputs, and
-  // outputs. Return null when there is an error exporting types.
-
-  bool TypeExportError = false;
 
   // Extract the usrData parameter (if we have one)
   if (FE->mUsrData) {
@@ -372,16 +366,19 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
       RSExportType *ET =
           RSExportType::Create(Context, T.getTypePtr(), LegacyKernelArgument);
 
-      if (ET) {
-        slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
-                    "Parameter packet must be a record");
+      slangAssert(ET && "Failed to export a kernel");
 
-        FE->mParamPacketType = static_cast<RSExportRecordType *>(ET);
-      } else {
-        TypeExportError = true;
-      }
+      slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
+                  "Parameter packet must be a record");
+
+      FE->mParamPacketType = static_cast<RSExportRecordType *>(ET);
     }
   }
+
+  // Construct type information about inputs and outputs. Return null when
+  // there is an error exporting types.
+
+  bool TypeExportError = false;
 
   if (FE->hasIns()) {
     for (InIter BI = FE->mIns.begin(), EI = FE->mIns.end(); BI != EI; BI++) {
@@ -392,7 +389,6 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
       // It is not an error if we don't export an input type for legacy
       // kernel arguments. This can happen in the case of a void pointer.
-      // See ReflectionState::addForEachIn().
       if (FE->mIsKernelStyle && !InExportType) {
         TypeExportError = true;
       }
@@ -426,7 +422,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 RSExportForEach *RSExportForEach::CreateDummyRoot(RSContext *Context) {
   slangAssert(Context);
   llvm::StringRef Name = "root";
-  RSExportForEach *FE = new RSExportForEach(Context, Name, clang::SourceLocation());
+  RSExportForEach *FE = new RSExportForEach(Context, Name);
   FE->mDummyRoot = true;
   return FE;
 }

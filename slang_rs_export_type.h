@@ -217,8 +217,7 @@ class RSExportType : public RSExportable {
  protected:
   RSExportType(RSContext *Context,
                ExportClass Class,
-               const llvm::StringRef &Name,
-               clang::SourceLocation Loc = clang::SourceLocation());
+               const llvm::StringRef &Name);
 
   // Let's make it private since there're some prerequisites to call this
   // function.
@@ -627,9 +626,6 @@ class RSExportRecordType : public RSExportType {
   inline const_field_iterator fields_end() const {
     return this->mFields.end();
   }
-  inline size_t fields_size() const {
-    return this->mFields.size();
-  }
 
  private:
   std::list<const Field*> mFields;
@@ -642,12 +638,11 @@ class RSExportRecordType : public RSExportType {
 
   RSExportRecordType(RSContext *Context,
                      const llvm::StringRef &Name,
-                     clang::SourceLocation Loc,
                      bool IsPacked,
                      bool IsArtificial,
                      size_t StoreSize,
                      size_t AllocSize)
-      : RSExportType(Context, ExportClassRecord, Name, Loc),
+      : RSExportType(Context, ExportClassRecord, Name),
         mIsPacked(IsPacked),
         mIsArtificial(IsArtificial),
         mStoreSize(StoreSize),

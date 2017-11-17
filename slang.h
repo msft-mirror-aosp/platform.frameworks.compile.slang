@@ -68,7 +68,6 @@ namespace clang {
 
 namespace slang {
 
-class ReflectionState;
 class RSCCOptions;
 class RSContext;
 class RSExportRecordType;
@@ -276,15 +275,12 @@ class Slang : public clang::ModuleLoader {
   //             with the same number of pairs given in @IOFiles.
   //
   // @Opts - Selection of options defined from invoking llvm-rs-cc
-  //
-  // @Reflection - Carries reflection information from 32-bit compile to 64-bit compile.
   bool
   compile(const std::list<std::pair<const char *, const char *>> &IOFiles64,
           const std::list<std::pair<const char *, const char *>> &IOFiles32,
           const std::list<std::pair<const char *, const char *>> &DepFiles,
           const RSCCOptions &Opts,
-          clang::DiagnosticOptions &DiagOpts,
-          ReflectionState *Reflection);
+          clang::DiagnosticOptions &DiagOpts);
 
   clang::ModuleLoadResult loadModule(clang::SourceLocation ImportLoc,
                                      clang::ModuleIdPath Path,
