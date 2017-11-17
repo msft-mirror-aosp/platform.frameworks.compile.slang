@@ -82,7 +82,7 @@
 
 #include "slang_rs_reflection.h"
 #include "slang_rs_reflection_cpp.h"
-#include "slang_rs_reflection_state.h"
+
 
 namespace {
 
@@ -574,8 +574,7 @@ bool Slang::compile(
     const std::list<std::pair<const char*, const char*> > &IOFiles32,
     const std::list<std::pair<const char*, const char*> > &DepFiles,
     const RSCCOptions &Opts,
-    clang::DiagnosticOptions &DiagOpts,
-    ReflectionState *RState) {
+    clang::DiagnosticOptions &DiagOpts) {
   if (IOFiles32.empty())
     return true;
 
@@ -633,27 +632,10 @@ bool Slang::compile(
   // a single pass over the input file.
   bool SuppressAllWarnings = (Opts.mOutputType != Slang::OT_Dependency);
 
-  bool doReflection = true;
-  if (Opts.mEmit3264 && (Opts.mBitWidth == 32)) {
-    // Skip reflection on the 32-bit path if we are going to emit it on the
-    // 64-bit path.
-    doReflection = false;
-  }
-
   std::list<std::pair<const char*, const char*> >::const_iterator
       IOFile64Iter = IOFiles64.begin(),
       IOFile32Iter = IOFiles32.begin(),
       DepFileIter = DepFiles.begin();
-
-  ReflectionState::Tentative TentativeRState(RState);
-  if (Opts.mEmit3264) {
-    if (Opts.mBitWidth == 32)
-      RState->openJava32(IOFiles32.size());
-    else {
-      slangAssert(Opts.mBitWidth == 64);
-      RState->openJava64();
-    }
-  }
 
   for (unsigned i = 0, e = IOFiles32.size(); i != e; i++) {
     InputFile = IOFile64Iter->first;
@@ -683,17 +665,21 @@ bool Slang::compile(
     const std::string &RealPackageName =
         mRSContext->getReflectJavaPackageName();
 
-    if (Opts.mOutputType != Slang::OT_Dependency) {
+    bool doReflection = true;
+    if (Opts.mEmit3264 && (Opts.mBitWidth == 32)) {
+      // Skip reflection on the 32-bit path if we are going to emit it on the
+      // 64-bit path.
+      doReflection = false;
+    }
+    if (Opts.mOutputType != Slang::OT_Dependency && doReflection) {
 
       if (Opts.mBitcodeStorage == BCST_CPP_CODE) {
-        if (doReflection) {
-          const std::string &outputFileName = (Opts.mBitWidth == 64) ?
-              mOutputFileName : mOutput32FileName;
-          RSReflectionCpp R(mRSContext, Opts.mJavaReflectionPathBase,
-                            getInputFileName(), outputFileName);
-          if (!R.reflect()) {
+        const std::string &outputFileName = (Opts.mBitWidth == 64) ?
+                                            mOutputFileName : mOutput32FileName;
+        RSReflectionCpp R(mRSContext, Opts.mJavaReflectionPathBase,
+                          getInputFileName(), outputFileName);
+        if (!R.reflect()) {
             return false;
-          }
         }
       } else {
         if (!Opts.mRSPackageName.empty()) {
@@ -704,8 +690,7 @@ bool Slang::compile(
         RSReflectionJava R(mRSContext, &generatedFileNames,
                            Opts.mJavaReflectionPathBase, getInputFileName(),
                            mOutputFileName,
-                           Opts.mBitcodeStorage == BCST_JAVA_CODE,
-                           RState);
+                           Opts.mBitcodeStorage == BCST_JAVA_CODE);
         if (!R.reflect()) {
           // TODO Is this needed or will the error message have been printed
           // already? and why not for the C++ case?
@@ -715,24 +700,22 @@ bool Slang::compile(
           return false;
         }
 
-        if (doReflection) {
-          for (std::vector<std::string>::const_iterator
-                   I = generatedFileNames.begin(), E = generatedFileNames.end();
-               I != E;
-               I++) {
-            std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
-                Opts.mJavaReflectionPathBase.c_str(),
-                (RealPackageName + OS_PATH_SEPARATOR_STR + *I).c_str());
-            appendGeneratedFileName(ReflectedName + ".java");
-          }
+        for (std::vector<std::string>::const_iterator
+                 I = generatedFileNames.begin(), E = generatedFileNames.end();
+             I != E;
+             I++) {
+          std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
+              Opts.mJavaReflectionPathBase.c_str(),
+              (RealPackageName + OS_PATH_SEPARATOR_STR + *I).c_str());
+          appendGeneratedFileName(ReflectedName + ".java");
+        }
 
-          if ((Opts.mOutputType == Slang::OT_Bitcode) &&
-              (Opts.mBitcodeStorage == BCST_JAVA_CODE) &&
-              !generateJavaBitcodeAccessor(Opts.mJavaReflectionPathBase,
-                                           RealPackageName.c_str(),
-                                           mRSContext->getLicenseNote())) {
-            return false;
-          }
+        if ((Opts.mOutputType == Slang::OT_Bitcode) &&
+            (Opts.mBitcodeStorage == BCST_JAVA_CODE) &&
+            !generateJavaBitcodeAccessor(Opts.mJavaReflectionPathBase,
+                                         RealPackageName.c_str(),
+                                         mRSContext->getLicenseNote())) {
+          return false;
         }
       }
     }
@@ -764,17 +747,6 @@ bool Slang::compile(
     IOFile64Iter++;
     IOFile32Iter++;
   }
-
-  if (Opts.mEmit3264) {
-    if (Opts.mBitWidth == 32)
-      RState->closeJava32();
-    else {
-      slangAssert(Opts.mBitWidth == 64);
-      RState->closeJava64();
-    }
-  }
-  TentativeRState.ok();
-
   return true;
 }
 
