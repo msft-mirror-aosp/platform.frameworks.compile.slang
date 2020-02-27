@@ -141,8 +141,6 @@ cc_binary_host {
     name: "llvm-rs-cc",
     defaults: ["slang-defaults"],
 
-    tidy: false, // b/146435095, segmentation fault with slang_rs_check_ast.cpp
-
     generated_headers: ["slang-gen-options"],
     srcs: [
         "llvm-rs-cc.cpp",
