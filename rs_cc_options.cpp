@@ -133,6 +133,11 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
   // employ/encourage this extension for zero-initialization of structures.
   DiagOpts.Warnings.push_back("no-gnu-empty-initializer");
 
+  // Always turn deprecation warning into a warning even if -Werror is specified.
+  // This is because we will always emit RenderScript deprecation warning, and turning
+  // it into an error will make the compilation always fail.
+  DiagOpts.Warnings.push_back("no-error=deprecated-declarations");
+
   for (llvm::opt::ArgList::const_iterator it = Args.begin(), ie = Args.end();
        it != ie; ++it) {
     const llvm::opt::Arg *A = *it;
