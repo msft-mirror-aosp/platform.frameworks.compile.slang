@@ -295,13 +295,11 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
 
   if (Opts.mTargetAPI == 0) {
     Opts.mTargetAPI = UINT_MAX;
-  } else if (Opts.mTargetAPI == SLANG_N_MR1_TARGET_API ||
-             Opts.mTargetAPI == SLANG_O_TARGET_API ||
-             Opts.mTargetAPI == SLANG_O_MR1_TARGET_API ||
-             Opts.mTargetAPI == SLANG_P_TARGET_API) {
+  } else if (Opts.mTargetAPI > SLANG_MAXIMUM_TARGET_API &&
+             Opts.mTargetAPI <= SLANG_MAXIMUM_CMDLINE_TARGET_API) {
     // Bug: http://b/35767071
-    // No new APIs for N_MR1, O, O_MR1 and P, convert to N.
-    Opts.mTargetAPI = SLANG_N_TARGET_API;
+    // No new APIs after N, convert to N.
+    Opts.mTargetAPI = SLANG_MAXIMUM_TARGET_API;
   }
 
   if ((Opts.mTargetAPI < 21) || (Opts.mBitcodeStorage == BCST_CPP_CODE))
