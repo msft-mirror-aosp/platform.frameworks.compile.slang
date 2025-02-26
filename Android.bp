@@ -65,6 +65,7 @@ cc_defaults {
         "-std=c++11",
         "-D__DISABLE_ASSERTS",
         "-DTARGET_BUILD_VARIANT=user",
+        "-Wno-cast-function-type-mismatch",
     ],
 
     product_variables: {
